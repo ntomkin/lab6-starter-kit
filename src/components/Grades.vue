@@ -93,7 +93,7 @@
           <input type="text" v-model="modalCourseValue" placeholder="Course">
         </div>
         <div class="cell small-6">
-          <input type="number" v-model="modalGradeValue" placeholder="Grade">
+          <input type="number" v-model="modalGradeValue" min="0" max="100" placeholder="Grade">
         </div>
       </div>
       <button class="close-button" aria-label="Close modal" type="button" @click.prevent="closeModalClicked">
@@ -126,7 +126,9 @@ export default {
       sortDirection: 'desc',
       searchTerms: '',
       modalTitle: 'Add Grade',
-      modalOpen: false
+      modalOpen: false,
+      modalGradeValue: null,
+      modalCourseValue: null
     }
   },
   computed: {
