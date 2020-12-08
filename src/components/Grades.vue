@@ -49,9 +49,9 @@
               <th></th>
             </thead>
             <tbody>
-              <tr>
-                <td class="text-left">Math</td>
-                <td class="text-left">80</td>
+              <tr v-for="grade in allGrades" :key="grade">
+                <td class="text-left">{{ grade.course_name }}</td>
+                <td class="text-left">{{ grade.grade }}</td>
                 <td class="action-buttons" width="100">
                   <div class="action-button">
                     <button type="button" @click.prevent="gradeItemDeleteClicked">
@@ -95,6 +95,13 @@
         <div class="cell small-6">
           <input type="number" v-model="modalGradeValue" min="0" max="100" placeholder="Grade">
         </div>
+        <div class="cell small-12">
+          <div v-html="message" class="message"></div>
+        </div>
+        <div class="cell small-12">
+          <button type="button" @click="cancelClicked" class="button clear small cancel-button">Cancel</button>
+          <button type="button" @click="createClicked" class="button small create-button">Create</button>
+        </div>
       </div>
       <button class="close-button" aria-label="Close modal" type="button" @click.prevent="closeModalClicked">
         <span aria-hidden="true">&times;</span>
@@ -127,8 +134,9 @@ export default {
       searchTerms: '',
       modalTitle: 'Add Grade',
       modalOpen: false,
-      modalGradeValue: null,
-      modalCourseValue: null
+      modalGradeValue: 0,
+      modalCourseValue: null,
+      message: null
     }
   },
   computed: {
@@ -140,6 +148,9 @@ export default {
     },
     averageMark () {
       return 0
+    },
+    allGrades() {
+      return this.$store.getters.all;
     }
   },
   methods: {
@@ -153,7 +164,17 @@ export default {
     },
     closeModalClicked () {
       this.modalOpen = false
+    },
+    createClicked () {
+      this.$store.commit('addGrade', {course_name: this.modalCourseValue, grade: this.modalGradeValue});
+      this.modalOpen = false
+    },
+    cancelClicked () {
+
     }
+  },
+  mounted() {
+    console.log(this.$store)
   }
 }
 </script>
@@ -207,16 +228,22 @@ table.stack {
   display: inline;
 }
 
+.message {
+  background: #e3e3e3;
+  border-radius: 4px;
+}
+
 .modal.modal-grade-edit-add {
   display: none;
   position: absolute;
+  background: white;
   top: 50%;
   left: 50%;
   margin-left: -350px;
   margin-top: -175px;
   width: 700px;
-  height: 350px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  height: 270px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
   padding: 30px;
   box-shadow: -5px 5px 10px 0 rgba(0,0,0,0.05);
   border-radius: 10px;
@@ -231,4 +258,5 @@ table.stack {
   right: 10px;
   top: 10px;
 }
+
 </style>
