@@ -49,7 +49,7 @@
               <th></th>
             </thead>
             <tbody>
-              <tr v-for="grade in allGrades" :key="grade">
+              <tr v-for="grade in allGrades" :key="grade.course_name+grade.grade">
                 <td class="text-left">{{ grade.course_name }}</td>
                 <td class="text-left">{{ grade.grade }}</td>
                 <td class="action-buttons" width="100">
@@ -86,27 +86,29 @@
       </div>
     </div>
 
-    <div :class="['modal', 'modal-grade-edit-add', {open: modalOpen}]">
-      <h4>{{ modalTitle }}</h4>
-      <div class="grid-x grid-padding-x grid-padding-y">
-        <div class="cell small-6">
-          <input type="text" v-model="modalCourseValue" placeholder="Course">
+    <transition name="fade">
+      <div :class="['modal', 'modal-grade-edit-add', {open: modalOpen}]" v-if="modalOpen">
+        <h4>{{ modalTitle }}</h4>
+        <div class="grid-x grid-padding-x grid-padding-y">
+          <div class="cell small-6">
+            <input type="text" v-model="modalCourseValue" placeholder="Course">
+          </div>
+          <div class="cell small-6">
+            <input type="number" v-model="modalGradeValue" min="0" max="100" placeholder="Grade">
+          </div>
+          <div class="cell small-12">
+            <div v-html="message" class="message"></div>
+          </div>
+          <div class="cell small-12">
+            <button type="button" @click="cancelClicked" class="button clear small cancel-button">Cancel</button>
+            <button type="button" @click="createClicked" class="button small create-button">Create</button>
+          </div>
         </div>
-        <div class="cell small-6">
-          <input type="number" v-model="modalGradeValue" min="0" max="100" placeholder="Grade">
-        </div>
-        <div class="cell small-12">
-          <div v-html="message" class="message"></div>
-        </div>
-        <div class="cell small-12">
-          <button type="button" @click="cancelClicked" class="button clear small cancel-button">Cancel</button>
-          <button type="button" @click="createClicked" class="button small create-button">Create</button>
-        </div>
+        <button class="close-button" aria-label="Close modal" type="button" @click.prevent="closeModalClicked">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-      <button class="close-button" aria-label="Close modal" type="button" @click.prevent="closeModalClicked">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -139,6 +141,14 @@ export default {
       message: null
     }
   },
+  watch: {
+    modalOpen: function(val, oldVal) {
+      if(!val) {
+        this.modalGradeValue = 0;
+        this.modalCourseValue = null;
+      }
+    }
+  },
   computed: {
     minimumMark () {
       return 0
@@ -149,8 +159,8 @@ export default {
     averageMark () {
       return 0
     },
-    allGrades() {
-      return this.$store.getters.all;
+    allGrades () {
+      return this.$store.getters.all
     }
   },
   methods: {
@@ -166,11 +176,14 @@ export default {
       this.modalOpen = false
     },
     createClicked () {
-      this.$store.commit('addGrade', {course_name: this.modalCourseValue, grade: this.modalGradeValue});
+      this.$store.commit('addGrade', {
+        course_name: this.modalCourseValue, 
+        grade: this.modalGradeValue
+      });
       this.modalOpen = false
     },
     cancelClicked () {
-
+      this.closeModalClicked()
     }
   },
   mounted() {
@@ -180,6 +193,11 @@ export default {
 </script>
 
 <style scoped>
+button,
+input {
+  outline: none;
+}
+
 input[type=search],
 select {
   border-radius: 5px;
@@ -259,4 +277,11 @@ table.stack {
   top: 10px;
 }
 
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
 </style>

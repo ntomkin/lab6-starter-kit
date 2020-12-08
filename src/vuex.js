@@ -9,7 +9,10 @@ const store = new Vuex.Store({
   },
   mutations: {
     addGrade: (state, data) => {
-      state.grades.push({course_name: data.course_name, grade: data.grade});
+      state.grades.push({
+        course_name: data.course_name, 
+        grade: data.grade
+      });
     }
   },
   getters: {

@@ -7,7 +7,7 @@ import App from './App'
 
 Vue.config.productionTip = false
 
-Vue.use(Vuex)
+Vue.prototype.$bus = new Vue()
 
 /* eslint-disable no-new */
 new Vue({
