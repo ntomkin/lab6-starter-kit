@@ -49,17 +49,21 @@
               <th></th>
             </thead>
             <tbody>
-              <tr v-for="grade in allGrades" :key="grade.course_name+grade.grade">
-                <td class="text-left">{{ grade.course_name }}</td>
-                <td class="text-left">{{ grade.grade }}</td>
+              <tr v-for="(grade, row) in grades" :key="grade.course_name + grade.grade * Math.random()">
+                <td class="text-left">
+                  {{ grade.course_name }}
+                </td>
+                <td class="text-left">
+                  {{ grade.grade }}
+                </td>
                 <td class="action-buttons" width="100">
                   <div class="action-button">
-                    <button type="button" @click.prevent="gradeItemDeleteClicked">
+                    <button type="button" @click.prevent="gradeItemDeleteClicked(grade)">
                       <img :src="iconDelete" class="action-icon" />
                     </button>
                   </div>
                   <div class="action-button">
-                    <button type="button" @click.prevent="gradeItemEditClicked">
+                    <button type="button" @click.prevent="gradeItemEditClicked(grade, row)">
                       <img :src="iconEdit" class="action-icon" />
                     </button>
                   </div>
@@ -101,7 +105,7 @@
           </div>
           <div class="cell small-12">
             <button type="button" @click="cancelClicked" class="button clear small cancel-button">Cancel</button>
-            <button type="button" @click="createClicked" class="button small create-button">Create</button>
+            <button type="button" @click="defaultActionClicked" class="button small create-button">{{ modalDefaultActionLabel }}</button>
           </div>
         </div>
         <button class="close-button" aria-label="Close modal" type="button" @click.prevent="closeModalClicked">
@@ -135,59 +139,102 @@ export default {
       sortDirection: 'desc',
       searchTerms: '',
       modalTitle: 'Add Grade',
+      modalDefaultActionLabel: 'Create',
       modalOpen: false,
       modalGradeValue: 0,
       modalCourseValue: null,
-      message: null
+      message: null,
+      activeRow: null,
+      activeGrade: null,
+      fakeCourses: ['Math', 'Geography', 'Art', 'Music', 'Science', 'Drama'] // We use this to add a few grades to the list for testing
     }
   },
   watch: {
-    modalOpen: function(val, oldVal) {
-      if(!val) {
-        this.modalGradeValue = 0;
-        this.modalCourseValue = null;
+    modalOpen: function (val, oldVal) {
+      if (!val) {
+        this.modalGradeValue = 0
+        this.modalCourseValue = null
       }
     }
   },
   computed: {
     minimumMark () {
-      return 0
+      return this.$store.getters.minimum
     },
     maximumMark () {
-      return 0
+      return this.$store.getters.maximum
     },
     averageMark () {
-      return 0
+      return this.$store.getters.average
     },
-    allGrades () {
-      return this.$store.getters.all
+    grades () {
+      let returnGrades = this.$store.getters.all
+
+      // if (this.isHonour) returnGrades = this.$store.getters.honours
+
+      // if (this.isFailed) returnGrades = this.$store.getters.failed      
+
+      return returnGrades
     }
   },
   methods: {
     createGradeClicked () {
+      this.modalTitle = "Add Grade"
       this.modalOpen = true
     },
-    gradeItemDeleteClicked () {},
-    gradeItemEditClicked () {},
+    gradeItemDeleteClicked (grade) {
+      if (!confirm('Are you sure you would like to delete this grade?')) return
+
+      this.$store.commit('deleteGrade', {
+        course_name: grade.course_name,
+        grade: grade.grade
+      })
+    },
+    gradeItemEditClicked (grade, row) {
+      this.activeRow = row
+      this.activeGrade = grade
+
+      this.modalTitle = "Edit Grade"
+      this.modalDefaultActionLabel = "Save"
+      this.modalCourseValue = grade.course_name
+      this.modalGradeValue = grade.grade
+      this.modalOpen = true
+    },
     sortClicked (direction) {
       this.sortDirection = direction
     },
     closeModalClicked () {
       this.modalOpen = false
     },
-    createClicked () {
-      this.$store.commit('addGrade', {
-        course_name: this.modalCourseValue, 
-        grade: this.modalGradeValue
-      });
+    defaultActionClicked () {
+      if (this.activeRow) {
+        this.$store.commit('saveGrade', {
+          course_name: this.modalCourseValue,
+          grade: this.modalGradeValue,
+          row: this.activeRow
+        })
+      } else {
+        this.$store.commit('addGrade', {
+          course_name: this.modalCourseValue,
+          grade: this.modalGradeValue
+        })
+      }
       this.modalOpen = false
     },
     cancelClicked () {
       this.closeModalClicked()
-    }
+    },
   },
-  mounted() {
-    console.log(this.$store)
+  mounted () {
+    // We use this to add a few grades to the list for testing
+    for (let x = 0; x < 20; x++) {
+      let randomCourse = this.fakeCourses[(Math.floor(Math.random() * (this.fakeCourses.length - 0)) + 0)]
+      let randomGrade = Math.floor(Math.random() * (100 - 0 + 1)) + 0
+      this.$store.commit('addGrade', {
+        course_name: randomCourse,
+        grade: randomGrade
+      })
+    }
   }
 }
 </script>
