@@ -5,12 +5,12 @@
         <div class="actions cell small-2 grid-x grid-padding-x grid-padding-y">
           <div class="cell small-1">
             <div class="toggle-button toggle-button-honour">
-              <ToggleButton v-model="isHonour" :width="80" :height="36" :color="{checked: '#44c700', unchecked: '#d3d3d3'}" :labels="{checked: 'Honour', unchecked: 'Honour'}" />
+              <ToggleButton v-model="isHonour" :sync="true" :width="80" :height="36" :color="{checked: '#44c700', unchecked: '#d3d3d3'}" :labels="{checked: 'Honour', unchecked: 'Honour'}" />
             </div>
           </div>
           <div class="cell small-1">
             <div class="toggle-button toggle-button-failed">
-              <ToggleButton v-model="isFailed" :width="80" :height="36" :color="{checked: '#FF0000', unchecked: '#d3d3d3'}" :labels="{checked: 'Failed', unchecked: 'Failed'}" />
+              <ToggleButton v-model="isFailed" :sync="true" :width="80" :height="36" :color="{checked: '#FF0000', unchecked: '#d3d3d3'}" :labels="{checked: 'Failed', unchecked: 'Failed'}" />
             </div>
           </div>
           <div class="cell small-3">
@@ -50,15 +50,15 @@
             </thead>
             <tbody>
               <tr v-for="(grade, row) in grades" :key="grade.course_name + grade.grade * Math.random()">
-                <td class="text-left">
+                <td class="text-left" width="40%">
                   {{ grade.course_name }}
                 </td>
-                <td class="text-left">
+                <td class="text-left" width="40%">
                   {{ grade.grade }}
                 </td>
-                <td class="action-buttons" width="100">
+                <td class="action-buttons text-right">
                   <div class="action-button">
-                    <button type="button" @click.prevent="gradeItemDeleteClicked(grade)">
+                    <button type="button" @click.prevent="gradeItemDeleteClicked(grade, row)">
                       <img :src="iconDelete" class="action-icon" />
                     </button>
                   </div>
@@ -90,6 +90,7 @@
       </div>
     </div>
 
+    <!-- Modal -->
     <transition name="fade">
       <div :class="['modal', 'modal-grade-edit-add', {open: modalOpen}]" v-if="modalOpen">
         <h4>{{ modalTitle }}</h4>
@@ -100,8 +101,8 @@
           <div class="cell small-6">
             <input type="number" v-model="modalGradeValue" min="0" max="100" placeholder="Grade">
           </div>
-          <div class="cell small-12">
-            <div v-html="message" class="message"></div>
+          <div class="cell small-12 messages">
+            <div class="message">{{ message }}</div>
           </div>
           <div class="cell small-12">
             <button type="button" @click="cancelClicked" class="button clear small cancel-button">Cancel</button>
@@ -155,6 +156,16 @@ export default {
         this.modalGradeValue = 0
         this.modalCourseValue = null
       }
+    },
+    isHonour: function (val, oldVal) {
+      if (val) {
+        this.isFailed = false
+      }
+    },
+    isFailed: function (val, oldVal) {
+      if (val) {
+        this.isHonour = false
+      }
     }
   },
   computed: {
@@ -170,32 +181,34 @@ export default {
     grades () {
       let returnGrades = this.$store.getters.all
 
-      // if (this.isHonour) returnGrades = this.$store.getters.honours
+      if (this.isHonour) returnGrades = this.$store.getters.honours
 
-      // if (this.isFailed) returnGrades = this.$store.getters.failed      
+      // if (this.isFailed) returnGrades = this.$store.getters.failed
 
       return returnGrades
     }
   },
   methods: {
     createGradeClicked () {
-      this.modalTitle = "Add Grade"
+      this.modalTitle = 'Add Grade'
+      this.modalDefaultActionLabel = 'Create'
       this.modalOpen = true
     },
-    gradeItemDeleteClicked (grade) {
+    gradeItemDeleteClicked (grade, row) {
       if (!confirm('Are you sure you would like to delete this grade?')) return
 
       this.$store.commit('deleteGrade', {
         course_name: grade.course_name,
-        grade: grade.grade
+        grade: grade.grade,
+        row: this.activeRow
       })
     },
     gradeItemEditClicked (grade, row) {
       this.activeRow = row
       this.activeGrade = grade
 
-      this.modalTitle = "Edit Grade"
-      this.modalDefaultActionLabel = "Save"
+      this.modalTitle = 'Edit Grade'
+      this.modalDefaultActionLabel = 'Save'
       this.modalCourseValue = grade.course_name
       this.modalGradeValue = grade.grade
       this.modalOpen = true
@@ -207,6 +220,7 @@ export default {
       this.modalOpen = false
     },
     defaultActionClicked () {
+      this.message = ""
       if (this.activeRow) {
         this.$store.commit('saveGrade', {
           course_name: this.modalCourseValue,
@@ -214,16 +228,20 @@ export default {
           row: this.activeRow
         })
       } else {
-        this.$store.commit('addGrade', {
-          course_name: this.modalCourseValue,
-          grade: this.modalGradeValue
-        })
+        if (this.modalCourseValue && this.modalGradeValue) {
+          this.$store.commit('addGrade', {
+            course_name: this.modalCourseValue,
+            grade: this.modalGradeValue
+          })
+          this.modalOpen = false
+        } else {
+          this.message = "Please enter both Course and Grade."
+        }
       }
-      this.modalOpen = false
     },
     cancelClicked () {
       this.closeModalClicked()
-    },
+    }
   },
   mounted () {
     // We use this to add a few grades to the list for testing
@@ -291,6 +309,11 @@ table.stack {
 
 .action-button {
   display: inline;
+}
+
+.messages {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .message {

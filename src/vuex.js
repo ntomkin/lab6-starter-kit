@@ -29,6 +29,15 @@ const store = new Vuex.Store({
     all: (state) => {
       return state.grades
     },
+    honours: (state) => {
+      let honourGrades = []
+      state.grades.forEach((item, idx) => {
+        if (item.grade >= 80) {
+          honourGrades.push(item)
+        }
+      })
+      return honourGrades
+    },
     minimum: (state) => {
       return 0
     },
